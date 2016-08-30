@@ -1,0 +1,80 @@
+<?php
+
+/**
+ * @file
+ * Add county fields to Location address.
+ */
+
+/**
+ * Implements hook_locationapi().
+ */
+function location_county_locationapi(&$location, $op, $a3 = NULL, $a4 = NULL) {
+  switch ($op) {
+    case 'fields':
+      return array('county' => t('County'));
+
+    case 'defaults':
+      return array(
+        'county' => array('default' => '', 'collect' => 0, 'weight' => 30),
+      );
+
+    case 'field_expand':
+      if ($a3 == 'county') {
+        return array(
+          '#type' => 'textfield',
+          '#title' => t('County'),
+          '#size' => 31,
+          '#maxlength' => 2048,
+          '#description' => NULL,
+          '#required' => ($a4 == 2),
+          '#default_value' => $location,
+        );
+      }
+      break;
+
+    case 'save':
+      db_delete('location_county')
+        ->condition('lid', $location['lid'])
+        ->execute();
+      if (!empty($location['county'])) {
+        db_insert('location_county')
+          ->fields(array(
+            'lid' => $location['lid'],
+            'county' => $location['county'],
+          ))
+          ->execute();
+      }
+      break;
+
+    case 'load':
+      $fields = array();
+      $county = db_query('SELECT county FROM {location_county} WHERE lid = :lid', array(':lid' => $location['lid']))->fetchField();
+      $fields['county'] = $county ? $county : '';
+      return $fields;
+
+    case 'delete':
+      db_delete('location_county')
+        ->condition('lid', $location['lid'])
+        ->execute();
+      break;
+  }
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function location_county_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
+
+/**
+ * Implements hook_token_list().
+ */
+function location_county_token_list($type = 'all') {
+  if ($type == 'node' || $type == 'user' || $type == 'all') {
+    $tokens['location']['location-county_N'] = t('Location county (If there are multiple locations per node, N is the iteration, starting with 0)');
+    return $tokens;
+  }
+}
