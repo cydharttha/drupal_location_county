@@ -20,13 +20,24 @@ function location_county_locationapi(&$location, $op, $a3 = NULL, $a4 = NULL) {
 
     case 'field_expand':
       if ($a3 == 'county') {
+        if (is_array($a4)) {
+          $settings = $a4;
+        }
+        else {
+          $settings = array(
+            'default' => NULL,
+            'weight' => NULL,
+            'collect' => $a4,
+            'widget' => NULL,
+          );
+        }
         return array(
           '#type' => 'textfield',
           '#title' => t('County'),
           '#size' => 31,
           '#maxlength' => 2048,
           '#description' => NULL,
-          '#required' => ($a4 == 2),
+          '#required' => ($settings['collect'] == 2),
           '#default_value' => $location,
         );
       }
